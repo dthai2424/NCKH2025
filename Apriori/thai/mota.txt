@@ -1,0 +1,25 @@
+Thuật toán Apriori:
+- Dùng trong việc khai thác tập phổ biến và sinh ra luật kết hợp từ tập phổ biến tìm được
+
+Nguyên lý:
+- Nếu một tập kích thước k  là phổ biến (support ≥ min_sup), thì mọi tập con kích thước k−1 của nó cũng phải phổ biến.
+=>Nếu một tập con (k−1) không phổ biến, thì không cần xét bất kỳ tập mục k nào có chứa nó.
+
+Các bước chính:
+
+Phase 1 (Sinh tập mục phổ biến):
+1. Khởi tạo L1
+2. Sinh ứng viên với k=2,3,..:
+-Sinh ứng viên candidate thứ k từ Lk-1 (Kết hợp 2 ứng viên có k-2 phần tử chung sau đó prune theo nguyên lý apriori hay nói cách khác check xem tập k-1 mới có phổ biến không hàm merge_candidate và is_valid_candidate)
+-Đếm support cho các ứng viên được tạo ra 
+-Lọc các ứng viên có support >= min_support 
+-Dừng sinh ứng viên nếu Lk rỗng
+3. Kết quả phase 1 là L chứa các tập phổ biến
+
+Phase 2 (Sinh luật kết hợp):
+1. Dùng L tìm ra từ phase 1
+2. Duyệt qua các tập phổ biến có kích thước >=2  để tạo ra 1 luật:
+-Sinh nhị phân để tạo ra tất cả tập con cho antecedent X(Tiền đề) và consequence Y(Hệ quả)
+-Tính confidence cho luật
+-Lọc các luật có confidence >= min_confidence
+3. Kết quả là rule_set tập các luật thỏa min_confidence
