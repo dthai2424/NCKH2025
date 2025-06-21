@@ -1,0 +1,3 @@
+input sẽ là 1 file exel, với mỗi dòng là 1 transaction với các item tương ứng
+Lưu ý thuật toán trong python sử dụng support=số giao dịch chứa item/tổng số giao dịch
+vd: với support=0.4, tổng số giao dịch là 5 => item cần xuất hiện trong ít 2/5 giao dịch (tức 40% <=> 0.4) để được xem là "frequent"
