@@ -1,6 +1,0 @@
-	Item	                        Support
-0	spaghetti & mineral water	0.059725
-1	chocolate & mineral water	0.052660
-2	eggs & mineral water	        0.050927
-3	milk & mineral water	        0.047994
-4	ground beef & mineral water	0.040928
