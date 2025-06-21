@@ -1,0 +1,8 @@
+Thuật toán FP-Growth:
+- Dùng để tìm tập phổ biến (frequent-itemsets) và luật kết hợp (association rules)
+
+* Nguyên lý:
+- Duyệt qua một lần để đếm tần suất xuất hiện (support) của các item và loại các item có support < min_support.
+- Từ tập trên sẽ sort lại theo thứ tự giảm dần để xây dựng FP-Tree.
+- Từ FP-Tree ta có thể suy ra được Conditional Pattern Base (CPB) và Conditional FP-Tree của mỗi item.
+- Từ Conditional FP-Tree ta có thể suy ra được frequent-itemsets.
