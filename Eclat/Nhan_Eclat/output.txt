@@ -1,0 +1,8 @@
+bread butter :4
+bread butter jam :2
+bread butter milk :2
+bread jam :2
+bread milk :4
+butter coke :2
+butter jam :2
+butter milk :4
