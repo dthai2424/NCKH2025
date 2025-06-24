@@ -2,6 +2,12 @@
 
 using namespace std;
 
+struct NListEntry
+{
+    int pre, post, count;
+    NListEntry(int p, int q, int c) : pre(p), post(q), count(c) {}
+};
+
 struct Node
 {
     string item_name;
@@ -15,6 +21,7 @@ struct Node
 struct PPCTree
 {
     Node *root;
+    unordered_map<string, vector<NListEntry>> nlists;
 
     void constructTree(const vector<vector<string>> &transactions, int minSupport)
     {
@@ -23,6 +30,8 @@ struct PPCTree
         {
             insertTransaction(transaction, root);
         }
+        PreOrder_Generate(root, 0);
+        PostOrder_Generate(root, 0);
     }
 
     void insertTransaction(const vector<string> &transaction, Node *node)
@@ -56,7 +65,7 @@ struct PPCTree
         insertTransaction(subTransaction, child);
     }
 
-    void PreOrder_Generate(Node *node, int &order)
+    void PreOrder_Generate(Node *node, int order)
     {
         if (!node)
             return;
@@ -67,9 +76,15 @@ struct PPCTree
             PreOrder_Generate(child, order);
         }
         node->post_order = order++;
+
+        // Lưu thông tin vào nlists
+        if (!node->item_name.empty())
+        {
+            nlists[node->item_name].emplace_back(node->pre_order, node->post_order, node->count);
+        }
     }
 
-    void PostOrder_Generate(Node *node, int &order)
+    void PostOrder_Generate(Node *node, int order)
     {
         if (!node)
             return;
@@ -84,4 +99,27 @@ struct PPCTree
 
 int main()
 {
+    PPCTree tree;
+    vector<vector<string>> transactions = {
+        {"A", "B", "C"},
+        {"A", "B"},
+        {"B", "C"},
+        {"A", "C"},
+        {"B"},
+        {"C"}};
+    int minSupport = 0.2 * transactions.size(); // Tính minSupport từ tỷ lệ phần trăm
+
+    tree.constructTree(transactions, minSupport);
+
+    // In ra kết quả
+    for (const auto &entry : tree.nlists)
+    {
+        cout << "Item: " << entry.first << "\n";
+        for (const auto &nle : entry.second)
+        {
+            cout << "<(" << nle.pre << ", " << nle.post << "): " << nle.count << ">\n";
+        }
+    }
+
+    return 0;
 }
