@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <algorithm>
 #include <math.h>
+#include <iterator>
 
 using namespace std;
 
@@ -28,14 +29,37 @@ bool isAncestor(const NListNode &a, const NListNode &b)
 vector<NListNode> intersectNList(const vector<NListNode> &A, const vector<NListNode> &B)
 {
     vector<NListNode> result;
-    for (const auto &a : A)
+    int i = 0, j = 0;
+    int n = A.size(), m = B.size();
+    while (i < n && j < m)
     {
-        for (const auto &b : B)
+        if (A[i].pre < B[j].pre)
         {
-            if (isAncestor(a, b))
+            if (A[i].post > B[j].post)
             {
-                result.emplace_back(b.pre, b.post, min(a.count, b.count));
+                result.emplace_back(A[i].pre, A[i].post, min(A[i].count, B[j].count));
+                ++j;
             }
+            else
+                ++i;
+        }
+        else
+            ++j;
+    }
+    auto ptr1 = result.begin();
+    auto ptr2 = next(ptr1);
+    while (ptr1 != result.end() && ptr2 != result.end())
+    {
+        if (ptr1->pre == ptr2->pre && ptr1->post == ptr2->post)
+        {
+            ptr1->count += ptr2->count;
+            result.erase(ptr2);
+            ptr2 = next(ptr1);
+        }
+        else
+        {
+            ptr1 = ptr2;
+            ptr2 = next(ptr1);
         }
     }
     return result;
