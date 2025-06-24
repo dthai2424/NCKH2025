@@ -59,14 +59,14 @@ class NList{
 
 
 
-public class Main{
+public class PPC{
     private List<List<String>> transaction;
     private double minSup;
     private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
     private PPCNode root; // = null
     private Map<String, Integer> freq; //tan suat xuat hien cua tung item trong f1
 
-    public Main(List<List<String>> transaction, double minSup){
+    public PPC(List<List<String>> transaction, double minSup){
         this.transaction = transaction;
         this.minSup = minSup;
         this.minSupCount = (int)Math.ceil(minSup * transaction.size());
@@ -75,7 +75,7 @@ public class Main{
     }
 
     //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
-    public List<String> buildF1(){
+    public List<String> buildf1(){
         for(List<String> t : transaction){
             for(String item : t){
                 freq.put(item, freq.getOrDefault(item,0) + 1);
@@ -100,7 +100,7 @@ public class Main{
             //danh sach cac item pho bien trong giao dich
             List<String> tran = new ArrayList<>();
             for(String i : f1){
-                if(tran.contains(i)){
+                if(t.contains(i)){
                     tran.add(i);
                 }
             }
@@ -111,26 +111,46 @@ public class Main{
         }
     }
 
+    //10-11: gan preOrder va postOrder cho tung node
+    private int preOrder_count=0;
+    private int postOrder_count=0;
+    public void assignPre(PPCNode node){
+        node.preOrder = preOrder_count++;
+        for(PPCNode child : node.child){
+            assignPre(child);
+        }
+        node.postOrder = postOrder_count++;
+    }
+
     //13-21:chen node vao cay
     private void insertTree(List<String> item, PPCNode node){
         if(item.isEmpty()) return;
         String ItemDauTien = item.get(0);
-        PPCNode child = null;
+        PPCNode ch = null;
 
         for(PPCNode c : node.child){
             if(c.itemName.equals(ItemDauTien)){
-                child = c;
+                ch = c;
                 break;
             }
         }
 
-        if(child != null){
-            child.count++;
+        if(ch != null){
+            ch.count++;
         } else{
-            child = new PPCNode(ItemDauTien, node);
-            node.child.add(child);
+            ch = new PPCNode(ItemDauTien, node);
+            node.child.add(ch);
         }
-        insertTree(item.subList(1, item.size()), child);
+        insertTree(item.subList(1, item.size()), ch);
+    }
+
+    public void printTree(PPCNode node, String a){
+        if(!node.itemName.equals("null")){
+            System.out.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
+        }
+        for(PPCNode c : node.child){
+            printTree(c, a + "      ");
+        }
     }
 
     public static void main(String[] args){
@@ -142,6 +162,14 @@ public class Main{
         transaction.add(Arrays.asList("b", "f", "e", "c", "d"));
         double minSup = 0.4; // 40%
 
-        
+        PPC ppc = new PPC(transaction, minSup);
+
+        List<String> f1 = ppc.buildf1();
+        System.out.println("F1: " + f1);
+
+        ppc.buildPPC(f1);
+        ppc.assignPre(ppc.root);
+        System.out.println("Cay PPC:");
+        ppc.printTree(ppc.root, " ");
     }
 }
