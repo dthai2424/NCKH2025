@@ -59,14 +59,14 @@ class NList{
 
 
 
-public class PPC{
+public class PrePost{
     private List<List<String>> transaction;
     private double minSup;
     private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
     private PPCNode root; // = null
     private Map<String, Integer> freq; //tan suat xuat hien cua tung item trong f1
 
-    public PPC(List<List<String>> transaction, double minSup){
+    public PrePost(List<List<String>> transaction, double minSup){
         this.transaction = transaction;
         this.minSup = minSup;
         this.minSupCount = (int)Math.ceil(minSup * transaction.size());
@@ -74,6 +74,7 @@ public class PPC{
         this.freq = new HashMap<>();
     }
 
+//thuat toan 1: xay dung cay PPC
     //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
     public List<String> buildf1(){
         for(List<String> t : transaction){
@@ -89,7 +90,7 @@ public class PPC{
                 f1.add(e.getKey());
             }
         }
-        //sort
+        //sort theo tan suat giam dan -> l1
         f1.sort((item1, item2) -> freq.get(item2) - freq.get(item1));
         return f1;
     }
@@ -153,6 +154,18 @@ public class PPC{
         }
     }
 
+
+//thuat toan 2: xay dung nlist
+    //
+    public List<NList> buildNList(List<String> l1){
+        List<NList> nl1 = new ArrayList<>();
+        for(String i : l1){
+            NList nlist = new NList(i);
+            nl1.add(nlist);
+        }
+        build
+    }
+
     public static void main(String[] args){
         List<List<String>> transaction = new ArrayList<>();
         transaction.add(Arrays.asList("a", "c", "g", "f"));
@@ -162,7 +175,7 @@ public class PPC{
         transaction.add(Arrays.asList("b", "f", "e", "c", "d"));
         double minSup = 0.4; // 40%
 
-        PPC ppc = new PPC(transaction, minSup);
+        PrePost ppc = new PrePost(transaction, minSup);
 
         List<String> f1 = ppc.buildf1();
         System.out.println("F1: " + f1);
