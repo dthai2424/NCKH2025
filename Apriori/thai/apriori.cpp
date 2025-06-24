@@ -340,8 +340,8 @@ struct Apriori {
 int main() {
   IOS();
 #ifdef thai
-  freopen("test.inp", "r", stdin);
-  freopen("test.out", "w", stdout);
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
 #endif
   Data dt;
   dt.ReadInput();
