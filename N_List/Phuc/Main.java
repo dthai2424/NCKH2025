@@ -1,4 +1,3 @@
-package NCKH2025.N_List.Phuc;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,12 +64,44 @@ public class Main{
     private double minSup;
     private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
     private PPCNode root; // = null
+    private Map<String, Integer> freq; //tan suat xuat hien cua tung item trong f1
 
-    public Main(List<List<String>> transaction, double minSup, int minSupCount){
+    public Main(List<List<String>> transaction, double minSup){
         this.transaction = transaction;
         this.minSup = minSup;
         this.minSupCount = (int)Math.ceil(minSup * transaction.size());
         this.root = new PPCNode("null", null);
+        this.freq = new HashMap<>();
+    }
+
+    // tim tap f1 va sap xep giam dan theo sup
+    public List<String> buildF1(){
+        for(List<String> t : transaction){
+            for(String item : t){
+                freq.put(item, freq.getOrDefault(item,0) + 1);
+            }
+        }
+        
+        // loc cac item co sup >= minSupCount
+        List<String> f1 = new ArrayList<>();
+        for(Map.Entry<String, Integer> e : freq.entrySet()){
+            if(e.getValue() >= minSupCount){
+                f1.add(e.getKey());
+            }
+        }
+        //sort
+        f1.sort((item1, item2) -> freq.get(item2) - freq.get(item1));
+        return f1;
+    }
+
+    public void buildPPC(List<String> f1){
+        for(List<String> t : transaction){
+            //danh sach cac item pho bien trong giao dich
+            List<String> tran = new ArrayList<>();
+            for(String i : f1){
+                if(tran.contains(i))
+            }
+        }
     }
 
     public static void main(String[] args){
