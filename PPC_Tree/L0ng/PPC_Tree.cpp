@@ -1,218 +1,195 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <math.h>
 
 using namespace std;
 
-int transactionSize = 0;
-int minSupport = 0;
-
-struct NListEntry
+// Cấu trúc đại diện một nút trong N-List
+struct NListNode
 {
-    int pre, post, count;
-    NListEntry(int p, int q, int c) : pre(p), post(q), count(c) {}
-};
-
-struct Node
-{
-    string item_name;
+    int pre;
+    int post;
     int count;
-    vector<Node *> children;
-    Node *parent;
-    int pre_order;
-    int post_order;
-    Node(string name) : item_name(name), count(1), pre_order(0), post_order(0) {}
+
+    NListNode(int pre, int post, int count)
+        : pre(pre), post(post), count(count) {}
 };
 
-bool ListCMP(const struct List &a, const struct List &b)
+// Kiểm tra node a có phải tổ tiên của node b không
+bool isAncestor(const NListNode &a, const NListNode &b)
 {
-    if (a.count != b.count)
-        return a.count > b.count; // Sắp xếp giảm dần theo count
-    return a.order < b.order;     // Nếu count bằng nhau, sắp xếp theo order
+    return a.pre < b.pre && a.post > b.post;
 }
 
-struct List
+// Giao NList
+// Chưa tối ưu lắm tí em tối ưu sau
+vector<NListNode> intersectNList(const vector<NListNode> &A, const vector<NListNode> &B)
 {
-    int order;
-    int count;
-    vector<string> items;
+    vector<NListNode> result;
+    for (const auto &a : A)
+    {
+        for (const auto &b : B)
+        {
+            if (isAncestor(a, b))
+            {
+                result.emplace_back(b.pre, b.post, min(a.count, b.count));
+            }
+        }
+    }
+    return result;
+}
 
-    List(int size) : order(0), count(0), items(size) {}
-    List() : order(0), count(0) {}
+// Tính support
+int getSupport(const vector<NListNode> &nlist)
+{
+    int total = 0;
+    for (const auto &node : nlist)
+    {
+        total += node.count;
+    }
+    return total;
+}
+
+// Cấu trúc Node của cây PPC
+struct Node
+{
+    string item;
+    int count;
+    int pre = 0, post = 0;
+    Node *parent;
+    vector<Node *> children;
+
+    Node(string itm = "", Node *par = nullptr)
+        : item(itm), count(1), parent(par) {}
 };
 
+// Cấu trúc cây PPC
 struct PPCTree
 {
     Node *root;
-    unordered_map<string, vector<NListEntry>> nlists;
-    vector<List> list[100];
-    int PreOrderCount = 0;
-    int PostOrderCount = 0;
+    unordered_map<string, vector<NListNode>> nlists;
+    unordered_map<string, int> frequency;
+    int preorderCounter = 0;
+    int postorderCounter = 0;
+    int minSupport;
 
-    void constructTree(const vector<vector<string>> &transactions, int minSupport)
+    PPCTree(int minSup) : minSupport(minSup)
     {
-        root = new Node("");
-        for (const auto &transaction : transactions)
-        {
-            insertTransaction(transaction, root);
-        }
-        PreOrder_Generate(root, PreOrderCount);
-        PostOrder_Generate(root, PostOrderCount);
+        root = new Node();
     }
 
-    void insertTransaction(const vector<string> &transaction, Node *node)
+    // Đếm tần suất từng item
+    void countFrequency(const vector<vector<string>> &transactions)
     {
-        if (transaction.empty())
-            return;
-        ++transactionSize;
-        string item = transaction[0];
-        Node *child = nullptr;
-
-        // Tìm nút con phù hợp
-        for (Node *c : node->children)
+        for (const auto &trans : transactions)
         {
-            if (c->item_name == item)
+            for (const auto &item : trans)
             {
-                child = c;
-                child->count++;
-                child->parent = node; // Cập nhật parent
-                break;
+                frequency[item]++;
+            }
+        }
+    }
+
+    // Lọc và sắp xếp lại giao dịch theo tần suất giảm dần
+    vector<string> filterAndSort(const vector<string> &transaction)
+    {
+        vector<string> result;
+
+        for (const auto &item : transaction)
+        {
+            if (frequency[item] >= minSupport)
+            {
+                result.push_back(item);
             }
         }
 
-        // Nếu không tìm thấy, tạo nút mới
-        if (!child)
-        {
-            child = new Node(item);
-            child->parent = node; // Cập nhật parent
-            node->children.push_back(child);
-        }
+        // Sắp xếp theo tần suất giảm dần
+        sort(result.begin(), result.end(), [&](const string &a, const string &b)
+             {
+                 if (frequency[a] != frequency[b])
+                     return frequency[a] > frequency[b];
+                 return a < b; // thứ tự từ điển nếu bằng nhau
+             });
 
-        // Đệ quy thêm các mục còn lại
-        vector<string> subTransaction(transaction.begin() + 1, transaction.end());
-        insertTransaction(subTransaction, child);
+        return result;
     }
 
-    void PreOrder_Generate(Node *node, int &order)
+    void insertTransaction(const vector<string> &transaction)
     {
-        if (!node)
-            return;
-
-        node->pre_order = order++;
-        for (Node *child : node->children)
+        Node *current = root;
+        for (const auto &item : transaction)
         {
-            PreOrder_Generate(child, order);
-        }
-        node->post_order = order++;
+            Node *child = nullptr;
 
-        // Lưu thông tin vào nlists
-        if (!node->item_name.empty())
-        {
-            nlists[node->item_name].emplace_back(node->pre_order, node->post_order, node->count);
-        }
-    }
-
-    void L1_Construction(Node *root)
-    {
-        for (auto &entry : nlists)
-        {
-            string item = entry.first;
-            // count
-            vector<NListEntry> &entries = entry.second;
-
-            // Tạo danh sách L1
-            List l1(1);
-            l1.count = 0;
-            l1.items.push_back(item);
-            for (const auto &nle : entries)
+            for (Node *c : current->children)
             {
-                l1.count += nle.count;
-            }
-            list[1].push_back(l1);
-        }
-    }
-
-    void PostOrder_Generate(Node *node, int &order)
-    {
-        if (!node)
-            return;
-
-        for (Node *child : node->children)
-        {
-            PostOrder_Generate(child, order);
-        }
-        node->post_order = order++;
-    }
-
-    void getPreOrderNodes(Node *node, vector<Node *> &preOrderNodes)
-    {
-        if (!node)
-            return;
-
-        preOrderNodes.push_back(node);
-        for (Node *child : node->children)
-        {
-            getPreOrderNodes(child, preOrderNodes);
-        }
-    }
-
-    int getItemOrder(const string &item)
-    {
-        for (int i = 0; i < list[1].size(); ++i)
-        {
-            if (list[1][i].items[0] == item)
-            {
-                return list[1][i].order; // Trả về chỉ số của mục trong L1
-            }
-        }
-        return -1; // Nếu không tìm thấy
-    }
-
-    void L2_Construction(Node *root)
-    {
-        sort(list[1].begin(), list[1].end(), ListCMP);
-        for (int i = 0; i < list[1].size(); ++i)
-        {
-            list[1][i].order = i; // Đặt thứ tự cho các mục trong L1
-        }
-        int size = list[1].size();
-        int tmp2[size][size];
-
-        vector<Node *> preOrderNodes;
-        getPreOrderNodes(root, preOrderNodes);
-
-        // Duyệt theo pre-order
-        for (Node *n : preOrderNodes)
-        {
-            int i = getItemOrder(n->item_name);
-            if (i == -1)
-                continue;
-
-            Node *ancestor = n->parent;
-            while (ancestor && ancestor->item_name.empty())
-            {
-                int j = getItemOrder(ancestor->item_name);
-                if (j != -1)
+                if (c->item == item)
                 {
-                    tmp2[i][j]++;
+                    c->count++;
+                    child = c;
+                    break;
                 }
-                ancestor = ancestor->parent; // Tìm nút cha không rỗng
+            }
+
+            if (!child)
+            {
+                child = new Node(item, current);
+                current->children.push_back(child);
+            }
+
+            current = child;
+        }
+    }
+
+    void assignPrePost(Node *node)
+    {
+        if (!node)
+            return;
+        node->pre = preorderCounter++;
+
+        for (Node *child : node->children)
+        {
+            assignPrePost(child);
+        }
+
+        node->post = postorderCounter++;
+
+        if (!node->item.empty() && frequency[node->item] >= minSupport)
+        {
+            nlists[node->item].emplace_back(node->pre, node->post, node->count);
+        }
+    }
+
+    void buildNLists(const vector<vector<string>> &transactions)
+    {
+        // Bước 1: đếm tần suất
+        countFrequency(transactions);
+
+        // Bước 2: lọc và chèn các giao dịch
+        for (const auto &trans : transactions)
+        {
+            auto filtered = filterAndSort(trans);
+            if (!filtered.empty())
+            {
+                insertTransaction(filtered);
             }
         }
 
-        // Tạo L2
-        vector<List> &L2 = list[2];
-        L2.clear();
-        for (size_t i = 0; i < size; ++i)
+        // Bước 3: gán pre/post và sinh NList
+        assignPrePost(root);
+    }
+
+    void printNLists()
+    {
+        cout << "=== N-Lists (filtered by minSup = " << minSupport << ") ===" << endl;
+        for (const auto &pair : nlists)
         {
-            for (size_t j = 0; j < size; ++j)
+            cout << "Item: " << pair.first << endl;
+            for (const auto &node : pair.second)
             {
-                if (tmp2[i][j] >= minSupport)
-                {
-                    List hihi;
-                    hihi.count = tmp2[i][j];
-                    hihi.items.push_back(list[1][i].items[0]);
-                    hihi.items.push_back(list[1][j].items[0]);
-                    L2.emplace_back(hihi);
-                }
+                cout << "  (pre=" << node.pre << ", post=" << node.post << ", count=" << node.count << ")" << endl;
             }
         }
     }
@@ -220,28 +197,35 @@ struct PPCTree
 
 int main()
 {
-    PPCTree tree;
     vector<vector<string>> transactions = {
-        {"A", "B", "C"},
-        {"A", "B"},
-        {"B", "C"},
-        {"A", "C"},
-        {"B"},
-        {"C"}};
+        {"A", "C", "G", "F"},
+        {"E", "A", "C", "B"},
+        {"E", "C", "B", "I"},
+        {"B", "F", "H"},
+        {"B", "F", "E", "C", "D"}};
 
-    minSupport = 0.2 * transactionSize; // Tính minSupport từ tỷ lệ phần trăm
+    int minSupport = ceil(0.25 * transactions.size());
 
-    tree.constructTree(transactions, minSupport);
+    // Xây cây PPC và sinh NList
+    PPCTree tree(minSupport);
+    tree.buildNLists(transactions);
+    tree.printNLists();
 
-    // In ra kết quả
-    for (const auto &entry : tree.nlists)
+    // Lấy NList của B và F
+    auto B = tree.nlists["B"];
+    auto F = tree.nlists["F"];
+
+    // Giao NList(B) và NList(F)
+    auto BF = intersectNList(B, F);
+
+    // In NList(BF)
+    cout << "\nNList(BF):" << endl;
+    for (const auto &node : BF)
     {
-        cout << "Item: " << entry.first << "\n";
-        for (const auto &nle : entry.second)
-        {
-            cout << "<(" << nle.pre << ", " << nle.post << "): " << nle.count << ">\n";
-        }
+        cout << "(" << node.pre << ", " << node.post << ", " << node.count << ")" << endl;
     }
+
+    cout << "Support(BF): " << getSupport(BF) << endl;
 
     return 0;
 }
