@@ -49,7 +49,7 @@ class NList{
     }
     // tra ve sup cua 1 itemset
     public int getSup() {
-        return codes.stream().mapToInt(c -> c.count).sum();
+        return codes.stream().mapToInt(c->c.count).sum();
     }
 
     @Override
@@ -59,7 +59,20 @@ class NList{
 }
 
 
+
 public class Main{
+    private List<List<String>> transaction;
+    private double minSup;
+    private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
+    private PPCNode root; // = null
+
+    public Main(List<List<String>> transaction, double minSup, int minSupCount){
+        this.transaction = transaction;
+        this.minSup = minSup;
+        this.minSupCount = (int)Math.ceil(minSup * transaction.size());
+        this.root = new PPCNode("null", null);
+    }
+
     public static void main(String[] args){
         List<List<String>> transaction = new ArrayList<>();
         transaction.add(Arrays.asList("a", "c", "g", "f"));
