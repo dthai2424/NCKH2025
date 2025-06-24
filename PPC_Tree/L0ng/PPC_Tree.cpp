@@ -207,7 +207,11 @@ struct PPCTree
             {
                 if (tmp2[i][j] >= minSupport)
                 {
-                    L2.emplace_back(list[1][i].items[0], list[1][j].items[0], tmp2[i][j]);
+                    List hihi;
+                    hihi.count = tmp2[i][j];
+                    hihi.items.push_back(list[1][i].items[0]);
+                    hihi.items.push_back(list[1][j].items[0]);
+                    L2.emplace_back(hihi);
                 }
             }
         }
