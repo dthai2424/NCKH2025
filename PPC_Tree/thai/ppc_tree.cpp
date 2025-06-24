@@ -8,7 +8,7 @@
 // 　／￣|　　|　|　|
 // 　| (￣ヽ＿_ヽ_ )__)
 // 　＼二つ
-// #define thai
+#define thai
 #define all(a) (a).begin(), (a).end()
 #define IOS() ios::sync_with_stdio(false), cin.tie(0), cout.tie(0)
 #define el cout << "\n"
