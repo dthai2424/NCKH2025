@@ -156,14 +156,28 @@ public class PrePost{
 
 
 //thuat toan 2: xay dung nlist
-    //
+    //duyet cay theo pre order 
+    public void NListPreOrder(PPCNode node, List<NList> nl1, List<String> l1){
+        for(int i=0;i<l1.size();i++){
+            if(node.itemName.equals(l1.get(i))){
+                PPCode res = new PPCode(node.preOrder, node.postOrder, node.count);
+                nl1.get(i).addCode(res);
+            }
+        }
+        
+        for(PPCNode c : node.child){
+            NListPreOrder(c, nl1, l1);
+        }
+    }
+
     public List<NList> buildNList(List<String> l1){
         List<NList> nl1 = new ArrayList<>();
         for(String i : l1){
             NList nlist = new NList(i);
             nl1.add(nlist);
         }
-        build
+        NListPreOrder(root, nl1, l1);
+        return nl1;
     }
 
     public static void main(String[] args){
@@ -184,5 +198,11 @@ public class PrePost{
         ppc.assignPre(ppc.root);
         System.out.println("Cay PPC:");
         ppc.printTree(ppc.root, " ");
+
+        List<NList> nlist = ppc.buildNList(f1);
+        System.out.println("NList:");
+        for(NList n : nlist){
+            System.out.println(n);
+        }
     }
 }
