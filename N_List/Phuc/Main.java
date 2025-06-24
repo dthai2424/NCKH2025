@@ -4,7 +4,7 @@ import java.util.stream.Collectors;
 class PPCNode{
     String itemName;
     int count;
-    List<PPCNode> children;
+    List<PPCNode> child;
     PPCNode parent;
     int preOrder;
     int postOrder;
@@ -12,7 +12,7 @@ class PPCNode{
     public PPCNode(String itemName, PPCNode parent){
         this.itemName = itemName;
         this.count = 1;
-        this.children = new ArrayList<>();
+        this.child = new ArrayList<>();
         this.parent = parent;
     }
 }
@@ -74,7 +74,7 @@ public class Main{
         this.freq = new HashMap<>();
     }
 
-    // tim tap f1 va sap xep giam dan theo sup
+    //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
     public List<String> buildF1(){
         for(List<String> t : transaction){
             for(String item : t){
@@ -94,14 +94,43 @@ public class Main{
         return f1;
     }
 
+    //buoc 4-9: xay cay
     public void buildPPC(List<String> f1){
         for(List<String> t : transaction){
             //danh sach cac item pho bien trong giao dich
             List<String> tran = new ArrayList<>();
             for(String i : f1){
-                if(tran.contains(i))
+                if(tran.contains(i)){
+                    tran.add(i);
+                }
+            }
+
+            if(!tran.isEmpty()){
+                insertTree(tran, root);
             }
         }
+    }
+
+    //13-21:chen node vao cay
+    private void insertTree(List<String> item, PPCNode node){
+        if(item.isEmpty()) return;
+        String ItemDauTien = item.get(0);
+        PPCNode child = null;
+
+        for(PPCNode c : node.child){
+            if(c.itemName.equals(ItemDauTien)){
+                child = c;
+                break;
+            }
+        }
+
+        if(child != null){
+            child.count++;
+        } else{
+            child = new PPCNode(ItemDauTien, node);
+            node.child.add(child);
+        }
+        insertTree(item.subList(1, item.size()), child);
     }
 
     public static void main(String[] args){
