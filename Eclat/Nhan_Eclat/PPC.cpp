@@ -164,7 +164,7 @@ void read_data(vector<transaction> &transactions) {
 
 int32_t main() {
     ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
-    freopen("input.txt", "r", stdin);
+    freopen("Eclat\\Nhan_Eclat\\chess.txt", "r", stdin);
 //    freopen("Eclat\\Nhan_Eclat\\output.txt", "w", stdout);
     vector<transaction> transactions;
     read_data(transactions);
