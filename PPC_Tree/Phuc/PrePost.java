@@ -74,7 +74,7 @@ public class PrePost{
         this.freq = new HashMap<>();
     }
 
-//thuat toan 1: xay dung cay PPC
+//build PPC
     //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
     public List<String> buildf1(){
         for(List<String> t : transaction){
@@ -155,7 +155,7 @@ public class PrePost{
     }
 
 
-//thuat toan 2: xay dung nlist
+//build nlist
     //duyet cay theo pre order 
     public void NListPreOrder(PPCNode node, List<NList> nl1, List<String> l1){
         for(int i=0;i<l1.size();i++){

@@ -164,15 +164,6 @@ public class PrePost_file{
         insertTree(item.subList(1, item.size()), ch);
     }
 
-    public void printTree(PPCNode node, String a){
-        if(!node.itemName.equals("null")){
-            System.out.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
-        }
-        for(PPCNode c : node.child){
-            printTree(c, a + "      ");
-        }
-    }
-
 
 //build nlist
     //duyet cay theo pre order 
@@ -207,26 +198,24 @@ public class PrePost_file{
 
         List<String> f1 = ppc.buildf1();
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter("c:\\Users\\DELL\\Desktop\\NCKH\\NCKH2025\\PPC_Tree\\Phuc\\NlistChess.txt"))){
-            writer.println("F1: " + f1);
+        try (PrintWriter write = new PrintWriter(new FileWriter("c:\\Users\\DELL\\Desktop\\NCKH\\NCKH2025\\PPC_Tree\\Phuc\\NlistChess.txt"))){
+            write.println("F1: " + f1);
 
             ppc.buildPPC(f1);
             ppc.assignPre(ppc.root);
-            writer.println("Cay PPC:");
-            writeTree(ppc.root, " ", writer);
+            write.println("Cay PPC:");
+            writeTree(ppc.root, " ", write);
 
             List<NList> nlist = ppc.buildNList(f1);
-            writer.println("NList:");
+            write.println("NList:");
             for(NList n : nlist){
-                writer.println(n);
+                write.println(n);
             }
-            System.out.println("Đã ghi kết quả ra file PrePostResult.txt");
-        } catch (IOException e) {
-            System.err.println("Lỗi ghi file: " + e.getMessage());
+        } catch (IOException e){
+            System.err.println("loi: " + e.getMessage());
         }
     }
 
-    // Thêm hàm ghi cây ra file
     public static void writeTree(PPCNode node, String a, PrintWriter writer){
         if(!node.itemName.equals("null")){
             writer.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
