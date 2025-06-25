@@ -59,14 +59,14 @@ class NList{
 
 
 
-public class Main{
+public class PrePost{
     private List<List<String>> transaction;
     private double minSup;
     private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
     private PPCNode root; // = null
     private Map<String, Integer> freq; //tan suat xuat hien cua tung item trong f1
 
-    public Main(List<List<String>> transaction, double minSup){
+    public PrePost(List<List<String>> transaction, double minSup){
         this.transaction = transaction;
         this.minSup = minSup;
         this.minSupCount = (int)Math.ceil(minSup * transaction.size());
@@ -74,8 +74,9 @@ public class Main{
         this.freq = new HashMap<>();
     }
 
+//thuat toan 1: xay dung cay PPC
     //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
-    public List<String> buildF1(){
+    public List<String> buildf1(){
         for(List<String> t : transaction){
             for(String item : t){
                 freq.put(item, freq.getOrDefault(item,0) + 1);
@@ -89,7 +90,7 @@ public class Main{
                 f1.add(e.getKey());
             }
         }
-        //sort
+        //sort theo tan suat giam dan -> l1
         f1.sort((item1, item2) -> freq.get(item2) - freq.get(item1));
         return f1;
     }
@@ -100,7 +101,7 @@ public class Main{
             //danh sach cac item pho bien trong giao dich
             List<String> tran = new ArrayList<>();
             for(String i : f1){
-                if(tran.contains(i)){
+                if(t.contains(i)){
                     tran.add(i);
                 }
             }
@@ -111,26 +112,72 @@ public class Main{
         }
     }
 
+    //10-11: gan preOrder va postOrder cho tung node
+    private int preOrder_count=0;
+    private int postOrder_count=0;
+    public void assignPre(PPCNode node){
+        node.preOrder = preOrder_count++;
+        for(PPCNode child : node.child){
+            assignPre(child);
+        }
+        node.postOrder = postOrder_count++;
+    }
+
     //13-21:chen node vao cay
     private void insertTree(List<String> item, PPCNode node){
         if(item.isEmpty()) return;
         String ItemDauTien = item.get(0);
-        PPCNode child = null;
+        PPCNode ch = null;
 
         for(PPCNode c : node.child){
             if(c.itemName.equals(ItemDauTien)){
-                child = c;
+                ch = c;
                 break;
             }
         }
 
-        if(child != null){
-            child.count++;
+        if(ch != null){
+            ch.count++;
         } else{
-            child = new PPCNode(ItemDauTien, node);
-            node.child.add(child);
+            ch = new PPCNode(ItemDauTien, node);
+            node.child.add(ch);
         }
-        insertTree(item.subList(1, item.size()), child);
+        insertTree(item.subList(1, item.size()), ch);
+    }
+
+    public void printTree(PPCNode node, String a){
+        if(!node.itemName.equals("null")){
+            System.out.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
+        }
+        for(PPCNode c : node.child){
+            printTree(c, a + "      ");
+        }
+    }
+
+
+//thuat toan 2: xay dung nlist
+    //duyet cay theo pre order 
+    public void NListPreOrder(PPCNode node, List<NList> nl1, List<String> l1){
+        for(int i=0;i<l1.size();i++){
+            if(node.itemName.equals(l1.get(i))){
+                PPCode res = new PPCode(node.preOrder, node.postOrder, node.count);
+                nl1.get(i).addCode(res);
+            }
+        }
+        
+        for(PPCNode c : node.child){
+            NListPreOrder(c, nl1, l1);
+        }
+    }
+
+    public List<NList> buildNList(List<String> l1){
+        List<NList> nl1 = new ArrayList<>();
+        for(String i : l1){
+            NList nlist = new NList(i);
+            nl1.add(nlist);
+        }
+        NListPreOrder(root, nl1, l1);
+        return nl1;
     }
 
     public static void main(String[] args){
@@ -142,6 +189,20 @@ public class Main{
         transaction.add(Arrays.asList("b", "f", "e", "c", "d"));
         double minSup = 0.4; // 40%
 
-        
+        PrePost ppc = new PrePost(transaction, minSup);
+
+        List<String> f1 = ppc.buildf1();
+        System.out.println("F1: " + f1);
+
+        ppc.buildPPC(f1);
+        ppc.assignPre(ppc.root);
+        System.out.println("Cay PPC:");
+        ppc.printTree(ppc.root, " ");
+
+        List<NList> nlist = ppc.buildNList(f1);
+        System.out.println("NList:");
+        for(NList n : nlist){
+            System.out.println(n);
+        }
     }
 }
