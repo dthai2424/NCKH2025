@@ -196,12 +196,12 @@ void printFL(vector<Nlist> FL) {
 
 int32_t main() {
     ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
-    freopen("Eclat\\Nhan_Eclat\\mushroom.txt", "r", stdin);
+    freopen("Eclat\\Nhan_Eclat\\chess.txt", "r", stdin);
 //    freopen("Eclat\\Nhan_Eclat\\output.txt", "w", stdout);
     vector<transaction> transactions;
     vector<Nlist> FL;
     read_data(transactions);
-    int minsupp = 0.08 * transactions.size();
+    int minsupp = 0.45 * transactions.size();
 
     // tạo PPC_Tree
     PPC_Tree t = PPC_Tree(transactions, minsupp);

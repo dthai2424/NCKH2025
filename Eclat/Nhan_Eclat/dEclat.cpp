@@ -121,13 +121,13 @@ void eclat(vector<node> node_list, int minsupp, vector<vector<int>> &FL) {
 
 int32_t main() {
     ios_base::sync_with_stdio(false); cin.tie(NULL); cout.tie(NULL);
-    freopen("Eclat\\Nhan_Eclat\\mushroom.txt", "r", stdin);
+    freopen("Eclat\\Nhan_Eclat\\chess.txt", "r", stdin);
 //    freopen("Eclat\\Nhan_Eclat\\output.txt", "w", stdout);
     vector<transaction> transactions;
     read_data(transactions);
     vector<node> node_list;
     vector<vector<int>> FL;
-    int minsupp = 0.08 * transactions.size();
+    int minsupp = 0.6 * transactions.size();
     init_diffset(transactions, node_list, minsupp);
     eclat(node_list, minsupp, FL);
     cout << "So tap: " << FL.size() << el;
