@@ -11,8 +11,9 @@
 #define thai
 #define all(a) (a).begin(), (a).end()
 #define IOS() ios::sync_with_stdio(false), cin.tie(0), cout.tie(0)
-#define el cout << "\n"
+// #define el cout << "\n"
 using namespace std;
+using namespace std::chrono;
 // Cấu trúc Transaction đại diện cho một giao dịch trong tập dữ liệu
 struct Transaction {
   vector<int> data;
@@ -107,7 +108,7 @@ struct Frequent {
 // xuyên.
 struct PPC_Tree {
   vector<Frequent> frequent_item; // Lưu trữ các tập hợp item thường xuyên
-  vector<NList> nlist;            // Lưu trữ danh sách NList
+  vector<NList> nlst;             // Lưu trữ danh sách NList
   unordered_map<int, int> support_map; // Giữ support_count cho tập 1 phần tử
   vector<Transaction> dataset; // Lưu trữ tập dữ liệu giao dịch đã được lọc và
                                // sort theo support giảm dần
@@ -124,25 +125,29 @@ struct PPC_Tree {
     this->min_conf = min_conf;
     root = new Node(0);
   }
-  // Hàm xử lý dữ liệu giao dịch, lọc các giao dịch dựa trên ngưỡng hỗ trợ tối
   // thiểu và sắp xếp các phần tử trong mỗi giao dịch theo tần suất giảm dần.
   void process_data(vector<Transaction> &raw_data) {
-    this->min_freq = ceil(this->min_sup * raw_data.size());
+    this->min_freq = this->min_sup * raw_data.size();
+
     vector<Transaction> filter_data;
     for (auto &trans : raw_data) {
       for (auto num : trans.data) {
         support_map[num]++;
       }
     }
+
     for (auto &trans : raw_data) {
       Transaction tr;
       for (auto num : trans.data) {
-        if (support_map[num] >= min_freq)
+        if (support_map[num] >= min_freq) {
           tr.data.push_back(num);
+        }
       }
       filter_data.push_back(tr);
     }
+    // el;
     for (auto &trans : filter_data) {
+
       sort(all(trans.data), [&](int a, int b) {
         if (support_map[a] != support_map[b])
           return support_map[a] > support_map[b];
@@ -167,7 +172,7 @@ struct PPC_Tree {
   }
   // Hàm chạy trên từng giao dịch để đưa list dữ liệu của giao dịch đó vào cây
   void insert_data() {
-    for (auto trans : dataset) {
+    for (auto &trans : dataset) {
       add_list(trans);
     }
   }
@@ -226,7 +231,7 @@ struct PPC_Tree {
       }
     }
     res.item = a.item;
-    res.item.push_back(b.item.back());
+    res.item.push_back(b.item.front());
     return res;
   }
   // Hàm khai thác cây PPC để tìm các tập hợp item thường xuyên.
@@ -241,101 +246,116 @@ struct PPC_Tree {
   // NList mới có nhiều hơn một phần tử, nó sẽ gọi đệ quy để tiếp tục khai thác
   // các tập hợp con của NList mới đó, tăng độ sâu (depth) lên 1. Cuối cùng, nó
   // sẽ in ra các tập hợp item thường xuyên đã tìm được
-
+  // 3 6 1
+  // 2 3 5 1
+  // 2 3 5
+  // 2 6
+  // 2 3 5 6
   void mining(vector<NList> &nlist, int depth) {
+    if (nlist.size() == 1) {
+      if (nlist[0].count >= min_freq && nlist[0].item.size() > 1) {
+        frequent_item.push_back(Frequent(nlist[0].item));
+      }
+      return;
+    }
 
-    for (int i = nlist.size() - 1; i > 0; i--) {
-
+    bool b = true;
+    for (int i = 0; i < nlist.size() - 1; i++) {
+      b = false;
       vector<NList> new_nlist;
-      for (int j = i - 1; j >= 0; j--) {
-        NList intersect = (nlist_intersection(nlist[i], nlist[j]));
+      for (int j = i + 1; j < nlist.size(); j++) {
+        NList intersect = nlist_intersection(nlist[j], nlist[i]);
 
         if (intersect.count >= min_freq) {
+
           new_nlist.push_back(intersect);
         }
       }
 
       if (!new_nlist.empty()) {
-        for (int k = 0; k < new_nlist.size(); k++) {
-          if (new_nlist[k].nl.size() == 1) {
-            vector<int> prefix;
-            for (int m = 0; m < new_nlist[k].item.size(); m++) {
-              int num = new_nlist[k].item[m];
-              prefix.push_back(num);
-              if (m + 1 >= depth + 1)
-                frequent_item.push_back(Frequent(prefix));
-            }
 
-          } else {
-            mining(new_nlist, depth + 1);
-          }
+        if (nlist.size() == 1) {
+
+        } else {
+          mining(new_nlist, depth + 1);
         }
       }
+    }
+    if (!b) {
+
+      for (int k = 0; k < nlist.size(); k++) {
+        if (nlist[k].count >= min_freq)
+          frequent_item.push_back(Frequent(nlist[k].item));
+      }
+
+      return;
     }
   }
   void run() {
     // Xử lý dữ liệu đầu vào
     process_data(this->dataset);
+    // print_data();
     // Tạo cây
     insert_data();
+
     int start = 0;
     int end = 0;
+
     // Tính toán prepost
     compute_prepost(root, start, end);
-    vector<NList> dummy(support_map.size());
+    vector<NList> dummy(support_map.size() + 1);
     // Tạo nlist từ cây PPC với 1 dummy
     init_nlist(root, dummy);
     // Lọc nlist theo ngưỡng tần suất tối thiểu
     for (auto &node_list : dummy) {
       if (node_list.count >= min_freq) {
-        nlist.push_back(node_list);
+        nlst.push_back(node_list);
       }
     }
     // Sắp xếp nlist theo tần suất giảm dần và sau đó theo giá trị phần tử
     // Sau đó đảo ngược nlist để có thứ tự từ lớn đến nhỏ vì node sẽ được duyệt
     // từ cuối lên đầu nên phần tử support lớn sẽ được duyệt trước vì thứ tự dfs
     // của nó sớm hơn
-    sort(all(nlist), [&](NList A, NList B) {
+    sort(all(nlst), [&](NList A, NList B) {
       if (support_map[A.item[0]] != support_map[B.item[0]]) {
-        return support_map[A.item[0]] > support_map[B.item[0]];
+        return support_map[A.item[0]] < support_map[B.item[0]];
       }
-      return A.item[0] < B.item[0];
+      return A.item[0] > B.item[0];
     });
-    reverse(all(nlist));
     // Thêm tập hợp item thường xuyên với kích thước 1 vào danh sách
     // frequent_item
-    for (auto node_list : nlist) {
 
-      frequent_item.push_back(Frequent({node_list.item[0]}));
-    }
     // Tìm tập hợp item thường xuyên với kích thước lớn hơn 1 nếu có
-    mining(nlist, 1);
+    mining(nlst, 1);
     // In ra kết quả là tập các item thường xuyên
-    print_frequent();
+    // print_frequent();
+    cout << "Số tập: " << frequent_item.size();
   }
   void print_data() {
-    el;
-    cout << "Data: ", el;
+    // el;
+    // cout << "Data: ", el;
     for (auto trans : dataset) {
       for (auto num : trans.data) {
         cout << num << " ";
       }
-      el;
+      // el;
     }
   }
   void print_tree(Node *cur) {
-    el;
-    cout << "tree: ", el;
+    // el;
+    // cout << "tree: ", el;
     cout << cur->id << ": " << cur->pre << " " << cur->post
-         << ",lv: " << cur->lv,
-        el;
+         << ",lv: " << cur->lv;
+    // el;
     for (auto child : cur->child) {
       print_tree(child.second);
     }
   }
-  void print_nlist(vector<NList> nlist) {
-    el;
-    cout << "nlist: ", el;
+  void print_nlist(vector<NList> &nlist) {
+    // el;
+    cout << nlist.size() << " ";
+
+    // cout << "nlist: ", el;
     for (auto node_list : nlist) {
       cout << "{ ";
       for (auto it : node_list.item) {
@@ -346,7 +366,7 @@ struct PPC_Tree {
         cout << "( " << nl.pre << " " << nl.post << " " << nl.count << " ), ";
       }
       cout << "}";
-      el;
+      // el;
     }
   }
   void print_frequent() {
@@ -356,12 +376,30 @@ struct PPC_Tree {
       for (int x : f.itemset)
         cout << x << ' ';
       cout << "}";
-      el;
+      // el;
     }
   }
 };
 // a b c d e f g h i j k
 // 1 2 3 4 5 6 7 8 9 10
+int sz=0;
+vector<int> split(string str) {
+  vector<int> result;
+  stringstream ss(str);
+  int item;
+  while (ss >> item) {
+    result.push_back(item);
+    sz = max(sz, result.back());
+  }
+  return result;
+}
+void read_data(vector<Transaction> &transactions) {
+  string line;
+  while (getline(cin, line)) {
+    transactions.push_back(Transaction(split(line)));
+  }
+}
+
 
 int main() {
   IOS();
@@ -370,7 +408,16 @@ int main() {
   freopen("output.txt", "w", stdout);
 #endif
   Data_Reader data_reader;
-  data_reader.ReadInput();
-  PPC_Tree tr(data_reader.dataset, data_reader.min_sup, data_reader.min_conf);
+ 	read_data(data_reader.dataset);
+ 	  auto start = high_resolution_clock::now();
+  PPC_Tree tr(data_reader.dataset, 0.5,0.55);
   tr.run();
+    auto stop = high_resolution_clock::now(); // kết thúc đo
+      auto duration =
+      duration_cast<milliseconds>(stop - start); // đo bằng mili-giây
+      cout<<"\n";
+  cout << "Thoi gian chay: " << duration.count() << " ms";
+  // tr.process_data();
+      cout<<"\n";
+
 }
