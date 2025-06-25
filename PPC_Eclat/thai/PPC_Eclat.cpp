@@ -251,44 +251,20 @@ struct PPC_Tree {
   // 2 3 5
   // 2 6
   // 2 3 5 6
-  void mining(vector<NList> &nlist, int depth) {
-    if (nlist.size() == 1) {
-      if (nlist[0].count >= min_freq && nlist[0].item.size() > 1) {
-        frequent_item.push_back(Frequent(nlist[0].item));
-      }
-      return;
-    }
-
-    bool b = true;
-    for (int i = 0; i < nlist.size() - 1; i++) {
-      b = false;
+  void eclat(vector<NList> &nlist) {
+    for (int i = 0; i < nlist.size(); i++) {
+      frequent_item.push_back(nlist[i].item);
       vector<NList> new_nlist;
       for (int j = i + 1; j < nlist.size(); j++) {
         NList intersect = nlist_intersection(nlist[j], nlist[i]);
 
         if (intersect.count >= min_freq) {
-
           new_nlist.push_back(intersect);
         }
       }
-
-      if (!new_nlist.empty()) {
-
-        if (nlist.size() == 1) {
-
-        } else {
-          mining(new_nlist, depth + 1);
-        }
+      if (new_nlist.size()) {
+        eclat(new_nlist);
       }
-    }
-    if (!b) {
-
-      for (int k = 0; k < nlist.size(); k++) {
-        if (nlist[k].count >= min_freq)
-          frequent_item.push_back(Frequent(nlist[k].item));
-      }
-
-      return;
     }
   }
   void run() {
@@ -326,7 +302,7 @@ struct PPC_Tree {
     // frequent_item
 
     // Tìm tập hợp item thường xuyên với kích thước lớn hơn 1 nếu có
-    mining(nlst, 1);
+    eclat(nlst);
     // In ra kết quả là tập các item thường xuyên
     // print_frequent();
     cout << "Số tập: " << frequent_item.size();
@@ -404,8 +380,8 @@ void read_data(vector<Transaction> &transactions) {
 int main() {
   IOS();
 #ifdef thai
-  freopen("input.txt", "r", stdin);
-  freopen("output.txt", "w", stdout);
+  freopen("test.inp", "r", stdin);
+  freopen("test.out", "w", stdout);
 #endif
   Data_Reader data_reader;
  	read_data(data_reader.dataset);
