@@ -1,130 +1,117 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
+#include <string>
+#include <algorithm>
 
 using namespace std;
 
+int MIN_SUPPORT = 2; // Minimum support
+
+// DBV - Dynamic Bit Vector
 struct DBV
 {
-    int pos;
-    vector<int> bit;
+    vector<bool> bits;
 
-    DBV() : pos(-1) {}
+    DBV(int size = 0) : bits(size, false) {}
+
+    void set(int tid)
+    {
+        if (tid >= bits.size())
+            bits.resize(tid + 1, false);
+        bits[tid] = true;
+    }
+
+    // Giao hai DBV
+    DBV intersect(const DBV &other) const
+    {
+        int size = min(bits.size(), other.bits.size());
+        DBV result(size);
+        for (int i = 0; i < size; ++i)
+        {
+            result.bits[i] = bits[i] && other.bits[i];
+        }
+        return result;
+    }
+
+    int support() const
+    {
+        return count(bits.begin(), bits.end(), true);
+    }
+
+    void print() const
+    {
+        for (bool b : bits)
+            cout << (b ? "1" : "0");
+        cout << " (support: " << support() << ")";
+    }
 };
 
-map<string, DBV> dbv_map;
-map<string, vector<int>> tidset;
-
-DBV intersection(const DBV &a, const DBV &b)
+// In tập mục kèm support
+void printItemset(const vector<string> &itemset, const DBV &dbv)
 {
-    DBV res;
-    res.pos = max(a.pos, b.pos);
-    int i = a.pos < b.pos ? b.pos - a.pos : 0;
-    int j = a.pos < b.pos ? 0 : a.pos - b.pos;
-    int count = min(a.bit.size() - i, b.bit.size() - j);
-
-    while (count > 0 && !(a.bit[i] && b.bit[j]))
-    {
-        i++;
-        j++;
-        res.pos++;
-        count--;
-    }
-
-    int i1 = i + count - 1, j1 = j + count - 1;
-    while (count > 0 && !(a.bit[i1] && b.bit[j1]))
-    {
-        i1--;
-        j1--;
-        count--;
-    }
-
-    if (count <= 0)
-    {
-        res.pos = 0;
-        res.bit.clear();
-        return res;
-    }
-
-    res.bit.resize(count);
-    for (int k = 0; k < count; k++)
-    {
-        res.bit[k] = a.bit[i + k] && b.bit[j + k];
-    }
-
-    return res;
+    cout << "{ ";
+    for (const string &item : itemset)
+        cout << item << " ";
+    cout << "} ";
+    dbv.print();
+    cout << endl;
 }
 
-void initTidset(const vector<vector<string>> &transactions)
+// Hàm đệ quy Eclat
+void eclat(vector<string> prefix, vector<pair<string, DBV>> items)
 {
-    for (int i = 0; i < transactions.size(); i++)
+    for (size_t i = 0; i < items.size(); ++i)
     {
-        for (const auto &item : transactions[i])
-        {
-            tidset[item].push_back(i);
-        }
-    }
-}
+        vector<string> new_prefix = prefix;
+        new_prefix.push_back(items[i].first);
 
-void initDBV()
-{
-    for (const auto &pair : tidset)
-    {
-        DBV dbv;
-        dbv.pos = 0;
-        dbv.bit.resize(pair.second[pair.second.size() - 1], false);
-        for (int tid : pair.second)
+        int sup = items[i].second.support();
+        if (sup >= MIN_SUPPORT)
         {
-            dbv.bit[tid] = true;
-        }
-        dbv_map[pair.first] = dbv;
-    }
-}
+            printItemset(new_prefix, items[i].second);
 
-void print_frequent(const vector<vector<int>> &frequent_itemsets)
-{
-    cout << "\nFrequent itemsets:\n";
-    for (const auto &itemset : frequent_itemsets)
-    {
-        cout << "{ ";
-        for (int item : itemset)
-        {
-            cout << item << " ";
-        }
-        cout << "}\n";
-    }
-}
-
-void eclat(const vector<DBV> &tidset, int min_freq)
-{
-    vector<vector<int>> frequent_itemsets;
-    for (int i = 0; i < tidset.size(); i++)
-    {
-        frequent_itemsets.push_back(tidset[i].bit);
-        print_frequent(frequent_itemsets);
-        vector<DBV> new_tidset;
-        for (int j = i + 1; j < tidset.size(); j++)
-        {
-            DBV intersect_tid = intersection(tidset[i], tidset[j]);
-            int sup = count(intersect_tid.bit.begin(), intersect_tid.bit.end(), 1);
-            if (sup >= min_freq)
+            // Sinh các tập con lớn hơn
+            vector<pair<string, DBV>> suffix;
+            for (size_t j = i + 1; j < items.size(); ++j)
             {
-                new_tidset.push_back(intersect_tid);
+                DBV inter = items[i].second.intersect(items[j].second);
+                if (inter.support() >= MIN_SUPPORT)
+                {
+                    suffix.emplace_back(items[j].first, inter);
+                }
+            }
+
+            // Đệ quy
+            if (!suffix.empty())
+            {
+                eclat(new_prefix, suffix);
             }
         }
-        if (!new_tidset.empty())
+    }
+}
+
+// Chuyển đổi giao dịch → Map<item, DBV>
+map<string, DBV> buildDBV(const vector<vector<string>> &transactions)
+{
+    map<string, DBV> dbvMap;
+    for (size_t tid = 0; tid < transactions.size(); ++tid)
+    {
+        for (const string &item : transactions[tid])
         {
-            eclat(new_tidset, min_freq);
+            dbvMap[item].set(tid);
         }
     }
+    return dbvMap;
 }
 
 int main()
 {
-    // Đọc dữ liệu từ input.txt
     freopen("input.txt", "r", stdin);
     freopen("output.txt", "w", stdout);
     vector<vector<string>> transactions;
     string line;
-    // Đọc từ input ngăn cách bởi dấu phẩy
     while (getline(cin, line))
     {
         vector<string> transaction;
@@ -135,14 +122,23 @@ int main()
             line.erase(0, pos + 1);
         }
         if (!line.empty())
-            transaction.push_back(line);
+            transaction.push_back(line); // Thêm phần cuối cùng nếu có
         transactions.push_back(transaction);
     }
 
-    initTidset(transactions);
-    initDBV();
+    map<string, DBV> dbvMap = buildDBV(transactions);
 
-    cout << "Frequent itemsets:\n";
+    // Chuyển về dạng vector để duyệt
+    vector<pair<string, DBV>> items;
+    // [item, DBV]
+    for (auto hihi : dbvMap)
+    {
+        if (hihi.second.support() >= MIN_SUPPORT)
+            items.emplace_back(hihi.first, hihi.second);
+    }
 
-    eclat(vector<DBV>(dbv_map.begin(), dbv_map.end()), 2); // Giả sử min_freq = 2
+    // Bắt đầu Eclat
+    eclat({}, items);
+
+    return 0;
 }
