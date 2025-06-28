@@ -1,5 +1,7 @@
 #include<bits/stdc++.h>
 using namespace std;
+using namespace std::chrono;
+#define int long long
 #define el '\n'
 struct transaction {
     vector<int> items;
@@ -58,6 +60,8 @@ void init_node(vector<transaction> transactions, vector<node> &node_list, int mi
     vector<node> tmp(sz + 1);
     for (int i = 0; i <= sz; ++i) {
         tmp[i].itemset.push_back(i);
+        tmp[i].support = 0;
+        tmp[i].dbv.pos = -1;
         tmp[i].dbv.bit_vector.resize(transactions.size()/16 + 1);
     }
 
@@ -92,17 +96,19 @@ void init_node(vector<transaction> transactions, vector<node> &node_list, int mi
 }
 
 // hàm giao giữa 2 dbv
-node intersect(node &a, node &b, int minsupp) {
+node intersect(node a, node b, int minsupp) {
     node result;
-    int pos = (a.dbv.pos < b.dbv.pos) ? b.dbv.pos : a.dbv.pos;
-    int i = ((a.dbv.pos < b.dbv.pos) ? (b.dbv.pos - a.dbv.pos) : 0);
-    int j = ((a.dbv.pos < b.dbv.pos) ? 0 : (a.dbv.pos - b.dbv.pos));
+    result.dbv.pos = -1;
+    result.support = 0;
+    int pos = max(a.dbv.pos, b.dbv.pos);
+    int i = (a.dbv.pos < b.dbv.pos) ? b.dbv.pos - a.dbv.pos : 0;
+    int j = (b.dbv.pos < a.dbv.pos) ? a.dbv.pos - b.dbv.pos : 0;
     int cnt = (a.dbv.bit_vector.size() - i < b.dbv.bit_vector.size() - j) ? a.dbv.bit_vector.size() - i : b.dbv.bit_vector.size() - j;
 
     // nếu cnt * 16 < minsupp thì không phổ biến
     if (cnt * 16 < minsupp) return result;
     // tìm vị trí đầu tiên có giá trị and khác 0
-    while (cnt > 0 && (a.dbv.bit_vector[i] & b.dbv.bit_vector[j]) == 0) {
+    while (cnt && (a.dbv.bit_vector[i] & b.dbv.bit_vector[j]) == 0) {
         i++;
         j++;
         cnt--;
@@ -110,8 +116,8 @@ node intersect(node &a, node &b, int minsupp) {
     }
     // tìm vị trí cuối có giá trị and khác 0
     int il = i + cnt - 1, jl = j + cnt - 1;
-    // if (il >= a.dbv.bit_vector.size() || jl >= b.dbv.bit_vector.size()) return result;
-    while (cnt > 0 && (a.dbv.bit_vector[il] & b.dbv.bit_vector[jl]) == 0) {
+    if (il >= a.dbv.bit_vector.size() || jl >= b.dbv.bit_vector.size()) return result;
+    while (cnt && (a.dbv.bit_vector[il] & b.dbv.bit_vector[jl]) == 0) {
         il--;
         jl--;
         cnt--;
@@ -161,7 +167,11 @@ int32_t main() {
     int minsupp = 0.08 * transactions.size();
     init_node(transactions, node_list, minsupp);
 
+    auto start = high_resolution_clock::now();
     eclat(node_list, minsupp, FI);
+    auto stop = high_resolution_clock::now(); // kết thúc đo
+    auto duration = duration_cast<milliseconds>(stop - start); // đo bằng mili-giây
+    cout << "Thoi gian chay: " << duration.count() << " ms" << el;
     cout << "So tap: " << FI.size() << el;
     cout << "minsupp: " << minsupp << el;
     cout << "So giao dich: " << transactions.size() << el;
