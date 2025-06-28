@@ -1,4 +1,0 @@
-chuyển cơ sở dữ liệu giao dịch từ dạng ngang sang dạng dọc, với cột đầu tiên là các item, mỗi hàng là một item, cột thứ 2 là danh sách các giao dịch chứa item đó
-cột thứ hai sẽ được lưu bằng set để đảm bảo thứ tự của các TID 
-Tiến hành duyệt qua từng dòng 1 - tương ứng với các item, giao các TID của các item đó lại với nhau, vd: item a và item b cùng xuất hiện trong giao dịch thứ 5 (TID=5) thì ta sẽ tiến hành tạo itemset mới với item=a,b và cột thứ 2 là 5, tương tự với các TID khác. 
-Sau khi đã duyệt hết các TID ở 1 trong 2 item đang xét, kiểm tra itemset mới chứa 2 item đó có sup>=minSup không, thỏa mãn  thì lưu lại và tiến hành xét tiếp. Thuật toán dừng đến khi không còn tổ hợp itemset nào có sup>=minSup

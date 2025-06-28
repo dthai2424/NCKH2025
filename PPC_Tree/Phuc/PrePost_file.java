@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,14 +60,14 @@ class NList{
 
 
 
-public class PrePost{
+public class PrePost_file{
     private List<List<String>> transaction;
     private double minSup;
     private int minSupCount; // = minSup * tong so luong giao dich, lam tron len
     private PPCNode root; // = null
     private Map<String, Integer> freq; //tan suat xuat hien cua tung item trong f1
 
-    public PrePost(List<List<String>> transaction, double minSup){
+    public PrePost_file(List<List<String>> transaction, double minSup){
         this.transaction = transaction;
         this.minSup = minSup;
         this.minSupCount = (int)Math.ceil(minSup * transaction.size());
@@ -74,7 +75,25 @@ public class PrePost{
         this.freq = new HashMap<>();
     }
 
-//build PPC
+    public static List<List<String>> docFile(String file){
+        List<List<String>> gd = new ArrayList<>();
+        try(BufferedReader br = new BufferedReader(new FileReader(file))){
+            String dong = br.readLine();
+            while(dong != null){
+                if(!dong.trim().isEmpty()){
+                    String[] item = dong.trim().split("\\s+");
+                    List<String> t = Arrays.asList(item);
+                    gd.add(t);
+                }
+                dong = br.readLine();
+            }
+        } catch(IOException e){
+            System.err.println("loi " + e.getMessage());
+        } 
+        return gd;
+    }
+
+// build cay PPC
     //buoc 1-3: tim tap f1 va sap xep giam dan theo sup
     public List<String> buildf1(){
         for(List<String> t : transaction){
@@ -112,7 +131,7 @@ public class PrePost{
         }
     }
 
-    //10-11: gan preOrder va postOrder cho tung node
+    //10-11: dfs gan preOrder va postOrder cho tung node
     private int preOrder_count=0;
     private int postOrder_count=0;
     public void assignPre(PPCNode node){
@@ -145,15 +164,6 @@ public class PrePost{
         insertTree(item.subList(1, item.size()), ch);
     }
 
-    public void printTree(PPCNode node, String a){
-        if(!node.itemName.equals("null")){
-            System.out.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
-        }
-        for(PPCNode c : node.child){
-            printTree(c, a + "      ");
-        }
-    }
-
 
 //build nlist
     //duyet cay theo pre order 
@@ -181,28 +191,37 @@ public class PrePost{
     }
 
     public static void main(String[] args){
-        List<List<String>> transaction = new ArrayList<>();
-        transaction.add(Arrays.asList("a", "c", "g", "f"));
-        transaction.add(Arrays.asList("e", "a", "c", "b"));
-        transaction.add(Arrays.asList("e", "c", "b", "i"));
-        transaction.add(Arrays.asList("b", "f", "h"));
-        transaction.add(Arrays.asList("b", "f", "e", "c", "d"));
-        double minSup = 0.4; // 40%
+        List<List<String>> transaction = docFile("c:\\Users\\DELL\\Desktop\\NCKH\\NCKH2025\\PPC_Tree\\Phuc\\chess.txt");
+        double minSup = 0.5;
 
-        PrePost ppc = new PrePost(transaction, minSup);
+        PrePost_file ppc = new PrePost_file(transaction, minSup);
 
         List<String> f1 = ppc.buildf1();
-        System.out.println("F1: " + f1);
 
-        ppc.buildPPC(f1);
-        ppc.assignPre(ppc.root);
-        System.out.println("Cay PPC:");
-        ppc.printTree(ppc.root, " ");
+        try (PrintWriter write = new PrintWriter(new FileWriter("c:\\Users\\DELL\\Desktop\\NCKH\\NCKH2025\\PPC_Tree\\Phuc\\NlistChess.txt"))){
+            write.println("F1: " + f1);
 
-        List<NList> nlist = ppc.buildNList(f1);
-        System.out.println("NList:");
-        for(NList n : nlist){
-            System.out.println(n);
+            ppc.buildPPC(f1);
+            ppc.assignPre(ppc.root);
+            write.println("Cay PPC:");
+            writeTree(ppc.root, " ", write);
+
+            List<NList> nlist = ppc.buildNList(f1);
+            write.println("NList:");
+            for(NList n : nlist){
+                write.println(n);
+            }
+        } catch (IOException e){
+            System.err.println("loi: " + e.getMessage());
+        }
+    }
+
+    public static void writeTree(PPCNode node, String a, PrintWriter writer){
+        if(!node.itemName.equals("null")){
+            writer.println(a + node.itemName + " (" + node.count + ") [" + node.preOrder + "," + node.postOrder + "]");
+        }
+        for(PPCNode c : node.child){
+            writeTree(c, a + "      ", writer);
         }
     }
 }
