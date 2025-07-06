@@ -25,8 +25,8 @@ bool isAncestor(const NListNode &a, const NListNode &b)
 }
 
 // Giao NList
-// Chưa tối ưu lắm tí em tối ưu sau
-vector<NListNode> intersectNList(const vector<NListNode> &A, const vector<NListNode> &B)
+vector<NListNode>
+intersectNList(const vector<NListNode> &A, const vector<NListNode> &B)
 {
     vector<NListNode> result;
     int i = 0, j = 0;
@@ -74,6 +74,11 @@ int getSupport(const vector<NListNode> &nlist)
         total += node.count;
     }
     return total;
+}
+
+bool candidatesCMP(const pair<string, vector<NListNode>> &a, const pair<string, vector<NListNode>> &b)
+{
+    return getSupport(a.second) > getSupport(b.second);
 }
 
 // Cấu trúc Node của cây PPC
@@ -217,7 +222,52 @@ struct PPCTree
             }
         }
     }
+
+    void mining(const vector<NListNode> &nlist, int depth = 0)
+    {
+        // Hàm này sẽ được sử dụng để khai thác các tập hợp item thường xuyên
+    }
 };
+
+void mining(vector<string> prefix, const vector<NListNode> &prefixNList, const vector<pair<string, vector<NListNode>>> &candidates, int minSupport)
+{
+    for (size_t i = 0; i < candidates.size(); ++i)
+    {
+        const auto &Xi = candidates[i].first;
+        const auto &Xi_NList = candidates[i].second;
+
+        vector<NListNode> newNList;
+        if (prefix.empty())
+        {
+            newNList = Xi_NList; // bắt đầu từ 1-itemset
+        }
+        else
+        {
+            newNList = intersectNList(prefixNList, Xi_NList); // mở rộng
+        }
+
+        int sup = getSupport(newNList);
+        if (sup >= minSupport)
+        {
+            vector<string> newItemset = prefix;
+            newItemset.push_back(Xi);
+
+            // In tập frequent itemset
+            cout << "Frequent: {";
+            for (size_t k = 0; k < newItemset.size(); ++k)
+            {
+                cout << newItemset[k];
+                if (k + 1 != newItemset.size())
+                    cout << ", ";
+            }
+            cout << "} support=" << sup << endl;
+
+            // Tiếp tục mở rộng tập {prefix ∪ Xi} với các item sau Xi
+            vector<pair<string, vector<NListNode>>> suffix(candidates.begin() + i + 1, candidates.end());
+            mining(newItemset, newNList, suffix, minSupport);
+        }
+    }
+}
 
 int main()
 {
@@ -235,21 +285,18 @@ int main()
     tree.buildNLists(transactions);
     tree.printNLists();
 
-    // Lấy NList của B và F
-    auto B = tree.nlists["B"];
-    auto F = tree.nlists["F"];
-
-    // Giao NList(B) và NList(F)
-    auto BF = intersectNList(B, F);
-
-    // In NList(BF)
-    cout << "\nNList(BF):" << endl;
-    for (const auto &node : BF)
+    // Chuẩn bị candidates cho mining: từ NLists
+    vector<pair<string, vector<NListNode>>> candidates;
+    //[item, nlist]
+    for (auto hihi : tree.nlists)
     {
-        cout << "(" << node.pre << ", " << node.post << ", " << node.count << ")" << endl;
+        candidates.emplace_back(hihi.first, hihi.second);
     }
 
-    cout << "Support(BF): " << getSupport(BF) << endl;
+    // Sắp xếp theo tần suất giảm dần để tạo ứng viên đúng thứ tự
+    sort(candidates.begin(), candidates.end(), candidatesCMP);
 
+    cout << "\n=== Frequent Itemsets ===\n";
+    mining({}, {}, candidates, minSupport);
     return 0;
 }
